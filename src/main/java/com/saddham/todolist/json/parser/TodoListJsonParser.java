@@ -18,31 +18,41 @@ public class TodoListJsonParser {
         objectMapper = new ObjectMapper();
     }
 
-    public List<Task> parse(String filename) {
-        List<Task> todoList = new ArrayList<>();
+    public List<Task> parse(File jsonFile) {
         try {
-            InputStream inputStream = TodoListJsonParser.class.getClassLoader().getResourceAsStream(filename);
-            todoList.addAll(objectMapper.readValue(inputStream, new TypeReference<List<Task>>() {}));
+            InputStream inputStream = TodoListJsonParser.class.getClassLoader().getResourceAsStream(jsonFile.getName());
+            return objectMapper.readValue(inputStream, new TypeReference<List<Task>>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return todoList;
     }
 
-    public List<String> parseAsJsonString(String filename) {
-        return parse(filename).stream().map(this::toString).toList();
+    public List<Task> parse(String todoListJson) {
+        try {
+            return new ArrayList<>(objectMapper.readValue(todoListJson, new TypeReference<List<Task>>() {
+            }));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Task parseSingleTask(String todoListJson) {
+        try {
+            return objectMapper.readValue(todoListJson, Task.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<String> parseAsJsonString(File file) {
+        return parse(file).stream().map(this::toString).toList();
     }
 
     public String toString(Task task) {
-        String taskStr;
-
         try {
-            taskStr = objectMapper.writeValueAsString(task);
+            return objectMapper.writeValueAsString(task);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-
-        return taskStr;
     }
 }

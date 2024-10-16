@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -54,6 +55,63 @@ public class TodoListClient {
         }
     }
 
+    public String getTodoList() {
+        try {
+            HttpRequest httpRequest = HttpRequest.newBuilder(defaultTodoListHttpRequest(""), (a,b) -> true)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> httpResponse = makeRequest(httpRequest);
+            if(httpResponse.statusCode() != 200) {
+                throw new RuntimeException(String.format("Failed to get todo list. HttpResponse: %s", httpResponse));
+            }
+
+            System.out.printf("Go todo list. Http response: %s%n", httpResponse);
+
+            return httpResponse.body();
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String completeTask(int taskId) {
+        try {
+            HttpRequest httpRequest = HttpRequest.newBuilder(defaultTodoListHttpRequest(String.format("/task/%d", taskId)), (a,b) -> true)
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString("{completed: true}"))
+                    .build();
+
+            HttpResponse<String> httpResponse = makeRequest(httpRequest);
+            if(httpResponse.statusCode() != 200) {
+                throw new RuntimeException(String.format("Failed to get todo list. HttpResponse: %s", httpResponse));
+            }
+
+            System.out.printf("Updated task %d. Http response: %s%n", taskId, httpResponse);
+
+            return httpResponse.body();
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String deleteTask(int taskId) {
+        try {
+            HttpRequest httpRequest = HttpRequest.newBuilder(defaultTodoListHttpRequest(String.format("/task/%d", taskId)), (a,b) -> true)
+                    .DELETE()
+                    .build();
+
+            HttpResponse<String> httpResponse = makeRequest(httpRequest);
+            if(httpResponse.statusCode() != 200) {
+                throw new RuntimeException(String.format("Failed to get todo list. HttpResponse: %s", httpResponse));
+            }
+
+            System.out.printf("Deleted task %d. Http response: %s%n", taskId, httpResponse);
+
+            return httpResponse.body();
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private HttpResponse<String> makeRequest(HttpRequest httpRequest) throws IOException, InterruptedException {
         HttpResponse<String> httpResponse = null;
 
@@ -79,7 +137,7 @@ public class TodoListClient {
 
     private HttpRequest defaultTodoListHttpRequest(String path) throws URISyntaxException {
         return HttpRequest.newBuilder()
-                .uri(new URI(apiServerUrl + path))
+                .uri(new URI(apiServerUrl + "/todolist" + path))
                 .header("x-api-key", apiKey)
                 .build();
     }
